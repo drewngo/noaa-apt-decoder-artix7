@@ -24,31 +24,44 @@ iq_data = i_data + 1j * q_data
 with open("channel_select_fir.pkl", "rb") as f:
     c_select_taps = pickle.load(f)
 
-f_data = signal.lfilter(c_select_taps, [1.0], iq_data)
+signal_data = signal.lfilter(c_select_taps, [1.0], iq_data)
 
 # trim the startup transient
-f_data = f_data[76:] # numtaps - 1 = 76
+signal_data = signal_data[len(c_select_taps) - 1:]
 
 # normalization
-max_abs_val = np.max(np.abs(f_data))
-fnorm_data = f_data / max_abs_val
+signal_data /= np.max(np.abs(signal_data))
 
 # verification
 print(f"\nblock one | channel select FIR & normalization\n---")
 print("max of data absolute values after normalization, 1 expected")
-print(f"{np.max(np.abs(fnorm_data))}")
+print(f"{np.max(np.abs(signal_data))}")
 
 
 # BLOCK 2 ---------------------------------------------
 # fm demodulation and unwrapping phase angle +- 3.14
 
-phase = np.angle(fnorm_data)
-phase_diff = np.diff(phase)
+phase = np.angle(signal_data)
+signal_data = np.diff(phase)
 
 # handle unwrapping
-wrapped_data = np.mod((phase_diff + np.pi), 2 * np.pi) - np.pi
+signal_data = np.mod((signal_data + np.pi), 2 * np.pi) - np.pi
 
 # verification
 print(f"\nblock two | fm demodulation & unwrapping of phase\n---")
 print("min and max of unwrapped phase angle data, +-3.14 expected")
-print(f"min: {np.min(wrapped_data)} | max: {np.max(wrapped_data)}")
+print(f"min: {np.min(signal_data)} | max: {np.max(signal_data)}")
+
+# BLOCK 3 ---------------------------------------------
+# anti-aliasing FIR, decimation
+
+with open("anti_alias_fir.pkl", "rb") as f:
+    anti_alias_taps = pickle.load(f)
+
+signal_data = signal.lfilter(anti_alias_taps, [1.0], signal_data)
+
+# trim the startup transient
+signal_data = signal_data[len(anti_alias_taps) - 1:]
+
+# decimate by 5
+signal_data = signal_data[::4];
