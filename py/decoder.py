@@ -70,3 +70,25 @@ print(f"length of signal, before decimation: {len(signal_data)}")
 signal_data = signal_data[::5];
 
 print(f"length of signal, after decimation:  {len(signal_data)}")
+
+# BLOCK 4 ---------------------------------------------
+# rectification and smoothing FIR
+print(f"\nblock four | retification and smoothing FIR\n---")
+
+# rectify
+signal_data = np.abs(signal_data)
+print("rectification, no negative values expected")
+print(f"min: {np.min(signal_data)}")
+
+with open("smoothing_fir.pkl", "rb") as f:
+    smoothing_taps = pickle.load(f)
+
+signal_data = signal.lfilter(smoothing_taps, [1.0], signal_data)
+
+# trim the startup transient
+signal_data = signal_data[len(smoothing_taps) - 1:]
+
+# normalization, 0-255 for pixel brightness
+signal_data -= np.min(signal_data)
+signal_data /= np.max(signal_data)
+signal_data *= 255
