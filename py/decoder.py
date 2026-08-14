@@ -54,6 +54,7 @@ print(f"min: {np.min(signal_data)} | max: {np.max(signal_data)}")
 
 # BLOCK 3 ---------------------------------------------
 # anti-aliasing FIR, decimation
+print(f"\nblock three | anti-aliasing FIR, decimating by 5\n---")
 
 with open("anti_alias_fir.pkl", "rb") as f:
     anti_alias_taps = pickle.load(f)
@@ -63,5 +64,9 @@ signal_data = signal.lfilter(anti_alias_taps, [1.0], signal_data)
 # trim the startup transient
 signal_data = signal_data[len(anti_alias_taps) - 1:]
 
+print(f"length of signal, before decimation: {len(signal_data)}")
+
 # decimate by 5
-signal_data = signal_data[::4];
+signal_data = signal_data[::5];
+
+print(f"length of signal, after decimation:  {len(signal_data)}")

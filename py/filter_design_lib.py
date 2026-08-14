@@ -57,7 +57,7 @@ def plot_frequency_response(
 
     plt.axvline(spec.passband_edge, color="green", linestyle="--", label="Passband Edge")
     plt.axvline(spec.stopband_edge, color="red", linestyle="--", label="Stopband Edge")
-    plt.axhline(-spec.attenuation_db, color="black", linestyle="--", label="Attentuation Target")
+    plt.axhline(-spec.attenuation_db, color="maroon", linestyle="--", label="Attentuation Target")
 
     plt.title("Frequency Response")
     plt.xlabel("Frequency (Hz)")
