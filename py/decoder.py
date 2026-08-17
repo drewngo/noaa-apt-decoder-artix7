@@ -2,6 +2,7 @@ from scipy.io import wavfile
 from scipy import signal
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 
 # ignoring non-data chunk WavFileWarning
 from scipy.io.wavfile import WavFileWarning
@@ -52,6 +53,7 @@ print(f"\nblock two | fm demodulation & unwrapping of phase\n---")
 print("min and max of unwrapped phase angle data, +-3.14 expected")
 print(f"min: {np.min(signal_data)} | max: {np.max(signal_data)}")
 
+
 # BLOCK 3 ---------------------------------------------
 # anti-aliasing FIR, decimation
 print(f"\nblock three | anti-aliasing FIR, decimating by 5\n---")
@@ -70,6 +72,7 @@ print(f"length of signal, before decimation: {len(signal_data)}")
 signal_data = signal_data[::5];
 
 print(f"length of signal, after decimation:  {len(signal_data)}")
+
 
 # BLOCK 4 ---------------------------------------------
 # rectification and smoothing FIR
@@ -92,3 +95,14 @@ signal_data = signal_data[len(smoothing_taps) - 1:]
 signal_data -= np.min(signal_data)
 signal_data /= np.max(signal_data)
 signal_data *= 255
+
+
+# IMG ASSEMBLY ----------------------------------------
+# truncating to reassemble
+num_lines = len(signal_data) // 6250
+signal_data = signal_data[:num_lines*6250]
+
+image_data = signal_data.reshape(-1,6250)
+print(image_data.shape)
+plt.imshow(image_data, cmap='gray')
+plt.show()
