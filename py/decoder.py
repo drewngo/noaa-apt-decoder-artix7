@@ -56,14 +56,12 @@ print(f"min: {np.min(signal_data)} | max: {np.max(signal_data)}")
 
 # BLOCK 3 ---------------------------------------------
 # anti-aliasing FIR, decimation
-print(f"\nblock three | anti-aliasing FIR, decimating by 5\n---")
+print(f"\nblock three | anti-aliasing FIR, decimating twice by 5 and 3\n---")
 
-with open("anti_alias_fir.pkl", "rb") as f:
+with open("anti_alias1_fir.pkl", "rb") as f:
     anti_alias_taps = pickle.load(f)
 
 signal_data = signal.lfilter(anti_alias_taps, [1.0], signal_data)
-
-# trim the startup transient
 signal_data = signal_data[len(anti_alias_taps) - 1:]
 
 print(f"length of signal, before decimation: {len(signal_data)}")
@@ -71,25 +69,26 @@ print(f"length of signal, before decimation: {len(signal_data)}")
 # decimate by 5
 signal_data = signal_data[::5];
 
-print(f"length of signal, after decimation:  {len(signal_data)}")
-
+print(f"length of signal, after decimation by 5:  {len(signal_data)}")
 
 # BLOCK 4 ---------------------------------------------
-# rectification and smoothing FIR
-print(f"\nblock four | retification and smoothing FIR\n---")
+# rectification and smoothing FIR, decimation by 3 to true word rate 4160Hz
 
 # rectify
 signal_data = np.abs(signal_data)
 print("rectification, no negative values expected")
 print(f"min: {np.min(signal_data)}")
 
-with open("smoothing_fir.pkl", "rb") as f:
-    smoothing_taps = pickle.load(f)
+# anti-aliasing FIR and decimation by 3 to word rate 4160Hz
+with open("anti_alias2_fir.pkl", "rb") as f:
+    anti_alias_taps = pickle.load(f)
 
-signal_data = signal.lfilter(smoothing_taps, [1.0], signal_data)
+signal_data = signal.lfilter(anti_alias_taps, [1.0], signal_data)
+signal_data = signal_data[len(anti_alias_taps) - 1:]
+signal_data = signal_data[::3];
 
-# trim the startup transient
-signal_data = signal_data[len(smoothing_taps) - 1:]
+print(f"length of signal, after decimation by 3:  {len(signal_data)}")
+
 
 # normalization, 0-255 for pixel brightness
 signal_data -= np.min(signal_data)
@@ -99,10 +98,10 @@ signal_data *= 255
 
 # IMG ASSEMBLY ----------------------------------------
 # truncating to reassemble
-num_lines = len(signal_data) // 6250
-signal_data = signal_data[:num_lines*6250]
+num_lines = len(signal_data) // 2080
+signal_data = signal_data[:num_lines*2080]
 
-image_data = signal_data.reshape(-1,6250)
+image_data = signal_data.reshape(-1,2080)
 print(image_data.shape)
 plt.imshow(image_data, cmap='gray')
 plt.show()
