@@ -96,6 +96,21 @@ signal_data /= np.max(signal_data)
 signal_data *= 255
 
 
+# SYNC PULSE ------------------------------------------
+# 4 samples per cycle, 2 high, 2 low. 7 cycles
+sync_pulse = np.tile([1,1,-1,-1], 7)
+correlated = signal.correlate(signal_data, sync_pulse, "same", "fft")
+
+peaks, properties = signal.find_peaks(correlated, height=250, distance=2000)
+print(f"peaks: {peaks} | properties: {properties}")
+gaps = np.diff(peaks)
+print(f"large gaps: {gaps[gaps>2500]}")
+print(f"min: {np.min(gaps)} | max: {np.max(gaps)} | mean: {np.mean(gaps)}")
+print(f"diff: {np.diff(peaks)}")
+
+plt.plot(correlated[:10000])
+plt.show()
+
 # IMG ASSEMBLY ----------------------------------------
 # truncating to reassemble
 num_lines = len(signal_data) // 2080
