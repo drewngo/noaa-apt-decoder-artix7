@@ -11,7 +11,7 @@ warnings.simplefilter('ignore', WavFileWarning)
 
 # -----------------------------------------------------
 
-fs, data = wavfile.read("../wav/apt.2021-11-27T10_42_34_142.wav")
+fs, data = wavfile.read("/Users/andrewngo/Codebase/noaa-apt-decoder-artix7/wav/SDRSharp_20220109_102742Z_137909300Hz_IQ_62400hz.wav")
 
 i_data = data[:,0]
 q_data = data[:,1]
@@ -56,7 +56,7 @@ print(f"min: {np.min(signal_data)} | max: {np.max(signal_data)}")
 
 # BLOCK 3 ---------------------------------------------
 # anti-aliasing FIR, decimation
-print(f"\nblock three | anti-aliasing FIR, decimating twice by 5 and 3\n---")
+print(f"\nblock three | anti-aliasing FIR, decimating by 5\n---")
 
 with open("anti_alias1_fir.pkl", "rb") as f:
     anti_alias_taps = pickle.load(f)
@@ -73,6 +73,7 @@ print(f"length of signal, after decimation by 5:  {len(signal_data)}")
 
 # BLOCK 4 ---------------------------------------------
 # rectification and smoothing FIR, decimation by 3 to true word rate 4160Hz
+print(f"\nblock four | rectification, anti-aliasing FIR, decimating by 3\n---")
 
 # rectify
 signal_data = np.abs(signal_data)
@@ -98,6 +99,7 @@ signal_data *= 255
 
 # SYNC PULSE ------------------------------------------
 # 4 samples per cycle, 2 high, 2 low. 7 cycles
+print(f"\nsync pulse | image assembly\n---")
 sync_pulse = np.tile([1,1,-1,-1], 7)
 correlated = signal.correlate(signal_data, sync_pulse, "same", "fft")
 
@@ -108,15 +110,14 @@ print(f"large gaps: {gaps[gaps>2500]}")
 print(f"min: {np.min(gaps)} | max: {np.max(gaps)} | mean: {np.mean(gaps)}")
 print(f"diff: {np.diff(peaks)}")
 
-plt.plot(correlated[:10000])
-plt.show()
-
 # IMG ASSEMBLY ----------------------------------------
-# truncating to reassemble
-num_lines = len(signal_data) // 2080
-signal_data = signal_data[:num_lines*2080]
+# use the sync pulse to align image lines
+image_data = []
+for i in range(len(peaks) -1):
+    image_data.append(signal.resample(signal_data[peaks[i]:peaks[i+1]], 2080))
 
-image_data = signal_data.reshape(-1,2080)
+image_data = np.array(image_data)    
+image_data = image_data.reshape(-1,2080)
 print(image_data.shape)
 plt.imshow(image_data, cmap='gray')
 plt.show()
