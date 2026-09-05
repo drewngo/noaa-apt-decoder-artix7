@@ -80,3 +80,15 @@ def plot_impulse_response(
     plt.grid(True)
     plt.show()
 
+# -----------------------------------------------------
+def quantize_taps(
+    taps: np.ndarray,
+    N: int
+) -> tuple[np.ndarray, np.ndarray]:
+
+    c_scaled    = taps * 2**N
+    c_rounded   = c_scaled.round().astype(int)
+    c_quantized = c_rounded / 2**N
+
+    return c_rounded, c_quantized
+    
