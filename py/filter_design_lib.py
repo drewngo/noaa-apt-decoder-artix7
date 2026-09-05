@@ -87,8 +87,29 @@ def quantize_taps(
 ) -> tuple[np.ndarray, np.ndarray]:
 
     c_scaled    = taps * 2**N
-    c_rounded   = c_scaled.round().astype(int)
+    c_rounded   = c_scaled.round().astype(int) # half-to-even rounding
+    if (np.any(c_rounded < -2**N) or np.any(c_rounded >= 2**N)):
+        print("quantize failed: beyond bit range")
+
     c_quantized = c_rounded / 2**N
 
     return c_rounded, c_quantized
+
+# -----------------------------------------------------
+def min_bitwidth(
+    taps: np.ndarray,
+    spec: FIRSpec,
+    N_range: list
+) -> int:
+
+    min = -spec.attenuation_db
+
+    for n in range(N_range[0], N_range[1]):
+        taps_rounded, taps_quantized = quantize_taps(taps, n)
+        freq, response = freqz(b=taps_quantized, fs=spec.sample_rate)
     
+        response = response[freq >= spec.stopband_edge]
+        check = 20 * np.log10(abs(response + 1e-300)) # adding epsilon to avoid divide by zero
+
+        if np.max(check) <= min:
+            return n
